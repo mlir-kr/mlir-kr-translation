@@ -4,7 +4,7 @@
 
 이제 AST와 언어에 익숙해졌으니, MLIR이 Toy 컴파일을 도울 수 있는지 살펴봅시다.
 
-## 소개: 다단계 중간 표현
+## 소개: 다단계 중간 표현(MLIR)
 
 LLVM([Kaleidoscope 튜토리얼](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html) 참조)과 같은 다른 컴파일러는 사전 정의된 고정 타입 세트(일반적으로 저수준/RISC와 같은) 명령어를 제공합니다.
 LLVM IR을 내보내기 전에 언어별 타입 검사, 분석 또는 변환을 실행하는 것은 주어진 언어의 프론트엔드에 달려 있습니다.
@@ -196,7 +196,6 @@ class ConstantOp : public mlir::Op<ConstantOp,
 };
 ```
 
-and we register this operation in the `ToyDialect` constructor:
 그리고 우리는 이 작업을 `ToyDialect` 생성자에 등록합니다:
 
 ```c++
@@ -207,19 +206,6 @@ ToyDialect::ToyDialect(mlir::MLIRContext *ctx)
 ```
 
 ### Op vs Operation: MLIR 작업 사용
-
-Now that we have defined an operation, we will want to access and transform it.
-In MLIR, there are two main classes related to operations: `Operation` and `Op`.
-Operation is the actual opaque instance of the operation, and represents the
-general API into an operation instance.
-An `Op` is the base class of a derived operation, like `ConstantOp`,
-and acts as smart pointer wrapper around a `Operation*`.
-This means that when we define our Toy operations, we are actually providing a clean interface
-for building and interfacing with the `Operation` class;
-this is why our `ConstantOp` defines no class fields.
-Therefore, we always pass these classes around by value, instead of by reference or pointer
-(*passing by value* is a common idiom and applies similarly to attributes, types, etc).
-We can always get an instance of our toy operation by using LLVM's casting infrastructure:
 
 이제 작업을 정의했으므로 접근하고 변환하려고 합니다.
 MLIR에는 작업과 관련된 두 가지 주요 클래스인 `Operation`과 `Op`가 있습니다.
@@ -250,8 +236,6 @@ MLIR은 C++ 템플릿인 `mlir::Op`를 전문화할 뿐만 아니라 선언적 �
 이것은 [작업 정의 구체화](../../ OpDefinitions.md) 프레임워크를 통해 이루어집니다.
 작업에 관한 사실은 TableGen 레코드에 간결하게 지정되며, 컴파일 시 해당 C++ 템플릿인 `mlir::Op` 전문화로 확장됩니다.
 C++ API 표면 변경에 대한 단순성, 간결성 및 일반적인 안정성을 고려하면 MLIR에서 작업을 정의할 때 ODS 프레임워크를 사용하는 것이 좋습니다.
-
-Lets see how to define the ODS equivalent of our ConstantOp:
 
 ConstantOp와 동등한 ODS를 정의하는 방법을 알아봅시다:
 
@@ -287,7 +271,7 @@ class Toy_Op<string mnemonic, list<OpTrait> traits = []> :
 
 위의 기본 'Toy_Op' 클래스에서 상속하여 Toy 작업을 정의합니다.
 여기 우리는 작업에 대한 니모닉과 특성 리스트를 제공합니다.
-여기서 [mnemonic](../../OpDefinitions.md#operation-name)은 통용어 접두사 없이
+여기서 [니모닉](../../OpDefinitions.md#operation-name)은 통용어 접두사 없이
 `ConstantOp::getOperationName`에 주어진 것과 일치합니다. `장난감 .`.
 여기에서의 고정 작업은 'NoSideEffect'로 표시됩니다.
 이것은 ODS 특성이며, `ConstantOp`: `mlir::OpTrait::HasNoSideEffect`를 정의할 때 제공하는 특성과 일대일 대응합니다.
